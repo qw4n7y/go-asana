@@ -142,6 +142,18 @@ type (
 		Message string `json:"message,omitempty"`
 	}
 
+	Webhook struct {
+		ID       int64    `json:"id,omitempty"`
+		Resource Resource `json:"resource,omitempty"`
+		Target   string   `json:"target",omitempty"`
+		Active   bool     `json:"active",omitempty`
+	}
+
+	Resource struct {
+		ID   int64  `json:"id,omitempty"`
+		Name string `json:"name,omitempty"`
+	}
+
 	// Errors always has at least 1 element when returned.
 	Errors []Error
 )
@@ -249,6 +261,33 @@ func (c *Client) GetUserByID(ctx context.Context, id int64, opt *Filter) (User, 
 	user := new(User)
 	err := c.Request(ctx, fmt.Sprintf("users/%d", id), opt, user)
 	return *user, err
+}
+
+func (c *Client) GetWebhooks(ctx context.Context, opt *Filter) ([]Webhook, error) {
+	webhooks := new([]Webhook)
+	err := c.Request(ctx, "webhooks", opt, &webhooks)
+	return *webhooks, err
+}
+
+func (c *Client) GetWebhook(ctx context.Context, id int64) (Webhook, error) {
+	webhook := new(Webhook)
+	err := c.Request(ctx, fmt.Sprintf("webhooks/%d", id), nil, &webhook)
+	return *webhook, err
+}
+
+func (c *Client) CreateWebhook(ctx context.Context, id int64, target string) (Webhook, error) {
+	webhook := new(Webhook)
+	p := url.Values{
+		"resource": []string{fmt.Sprintf("%d", id)},
+		"target":   []string{target},
+	}
+	err := c.request(ctx, "POST", "webhooks", nil, p, nil, &webhook)
+	return *webhook, err
+}
+
+func (c *Client) DeleteWebhook(ctx context.Context, id int64) error {
+	var resp interface{} // Empty response
+	return c.request(ctx, "DELETE", fmt.Sprintf("webhooks/%d", id), nil, nil, nil, &resp)
 }
 
 func (c *Client) Request(ctx context.Context, path string, opt *Filter, v interface{}) error {

@@ -274,6 +274,130 @@ func TestCreateTask(t *testing.T) {
 	}
 }
 
+func TestGetWebhook(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/webhooks/1", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"data":{"id":1,"resource":{"id":5,"name":"Project X"},"target":"http://site.com/webhook/666","active":true}}`)
+	})
+
+	webhook, err := client.GetWebhook(context.Background(), 1)
+	if err != nil {
+		t.Errorf("GetWebhook returned error: %v", err)
+	}
+
+	want := Webhook{
+		ID:       1,
+		Resource: Resource{ID: 5, Name: "Project X"},
+		Target:   "http://site.com/webhook/666",
+		Active:   true,
+	}
+
+	if !reflect.DeepEqual(webhook, want) {
+		t.Errorf("GetWebhook returned %+v, want %+v", webhook, want)
+	}
+}
+
+func TestGetWebhooks(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/webhooks", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"data":[{"id":1,"resource":{"id":5,"name":"Project X"},"target":"http://site.com/webhook/666","active":true},{"id":2,"resource":{"id":6,"name":"Project Y"},"target":"http://site.com/webhook/555","active":true}]}`)
+	})
+
+	webhooks, err := client.GetWebhooks(context.Background(), nil)
+	if err != nil {
+		t.Errorf("GetWebhooks returned error: %v", err)
+	}
+
+	want := []Webhook{
+		{
+			ID:       1,
+			Resource: Resource{ID: 5, Name: "Project X"},
+			Target:   "http://site.com/webhook/666",
+			Active:   true,
+		},
+		{
+			ID:       2,
+			Resource: Resource{ID: 6, Name: "Project Y"},
+			Target:   "http://site.com/webhook/555",
+			Active:   true,
+		},
+	}
+
+	if !reflect.DeepEqual(webhooks, want) {
+		t.Errorf("GetWebhooks returned %+v, want %+v", webhooks, want)
+	}
+}
+
+func TestCreateWebhook(t *testing.T) {
+	setup()
+	defer teardown()
+
+	var called int
+	defer func() { testCalled(t, called, 1) }()
+
+	mux.HandleFunc("/webhooks", func(w http.ResponseWriter, r *http.Request) {
+		called++
+		testMethod(t, r, "POST")
+		testHeader(t, r, "Content-Type", "application/x-www-form-urlencoded")
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("error reading request body: %v", err)
+		}
+		values, err := url.ParseQuery(string(b))
+		if err != nil {
+			t.Fatalf("error parsing body: %v", err)
+		}
+		want := url.Values{
+			"resource": []string{"123"},
+			"target":   []string{"http://server.com/webhook"},
+		}
+		if !reflect.DeepEqual(values, want) {
+			t.Errorf("invalid body received %v", values)
+		}
+		fmt.Fprint(w, `{"data":{"id":3,"resource":{"id":123,"name":"Project Z"},"target":"http://server.com/webhook","active":true}}`)
+	})
+
+	webhook, err := client.CreateWebhook(context.Background(), 123, "http://server.com/webhook")
+
+	if err != nil {
+		t.Errorf("CreateWebhook returned error: %v", err)
+	}
+
+	want := Webhook{
+		ID:       3,
+		Resource: Resource{ID: 123, Name: "Project Z"},
+		Target:   "http://server.com/webhook",
+		Active:   true,
+	}
+	if !reflect.DeepEqual(webhook, want) {
+		t.Errorf("CreateWebhook returned %+v, want %+v", webhook, want)
+	}
+}
+
+func TestDeleteWebhook(t *testing.T) {
+	setup()
+	defer teardown()
+
+	var called int
+	defer func() { testCalled(t, called, 1) }()
+
+	mux.HandleFunc("/webhooks/123", func(w http.ResponseWriter, r *http.Request) {
+		called++
+		testMethod(t, r, "DELETE")
+		fmt.Fprint(w, `{"data":{}}`)
+	})
+
+	err := client.DeleteWebhook(context.Background(), 123)
+
+	if err != nil {
+		t.Errorf("DeleteWebhook returned error: %v", err)
+	}
+}
+
 func testMethod(t *testing.T, r *http.Request, want string) {
 	if got := r.Method; got != want {
 		t.Errorf("Request method: %v, want %v", got, want)
