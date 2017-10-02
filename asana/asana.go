@@ -81,6 +81,7 @@ type (
 		CreatedAt      time.Time `json:"created_at,omitempty"`
 		CreatedBy      User      `json:"created_by,omitempty"` // Undocumented field, but it can be included.
 		Completed      bool      `json:"completed,omitempty"`
+		CompletedAt    time.Time `json:"completed_at,omitempty"`
 		Name           string    `json:"name,omitempty"`
 		Hearts         []Heart   `json:"hearts,omitempty"`
 		Notes          string    `json:"notes,omitempty"`
