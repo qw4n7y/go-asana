@@ -127,6 +127,8 @@ type (
 		ModifiedSince  string   `url:"modified_since,omitempty"`
 		OptFields      []string `url:"opt_fields,comma,omitempty"`
 		OptExpand      []string `url:"opt_expand,comma,omitempty"`
+		Offset         string   `url:"offset,omitempty"`
+		Limit          uint32   `url:"limit,omitempty"`
 	}
 
 	request struct {
@@ -134,8 +136,9 @@ type (
 	}
 
 	Response struct {
-		Data   interface{} `json:"data,omitempty"`
-		Errors Errors      `json:"errors,omitempty"`
+		Data     interface{} `json:"data,omitempty"`
+		NextPage *NextPage   `json:"next_page,omitempty"`
+		Errors   Errors      `json:"errors,omitempty"`
 	}
 
 	Error struct {
@@ -153,6 +156,12 @@ type (
 	Resource struct {
 		ID   int64  `json:"id,omitempty"`
 		Name string `json:"name,omitempty"`
+	}
+
+	NextPage struct {
+		Offset string `json:"offset,omitempty"`
+		Path   string `json:"path,omitempty"`
+		URI    string `json:"uri,omitempty"`
 	}
 
 	// Errors always has at least 1 element when returned.
@@ -199,15 +208,43 @@ func (c *Client) ListUsers(ctx context.Context, opt *Filter) ([]User, error) {
 }
 
 func (c *Client) ListProjects(ctx context.Context, opt *Filter) ([]Project, error) {
-	projects := new([]Project)
-	err := c.Request(ctx, "projects", opt, projects)
-	return *projects, err
+	projects := []Project{}
+	for {
+		page := []Project{}
+		next, err := c.request(ctx, "GET", "projects", nil, nil, opt, &page)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, page...)
+		if next == nil {
+			break
+		} else {
+			newOpt := *opt
+			opt = &newOpt
+			opt.Offset = next.Offset
+		}
+	}
+	return projects, nil
 }
 
 func (c *Client) ListTasks(ctx context.Context, opt *Filter) ([]Task, error) {
-	tasks := new([]Task)
-	err := c.Request(ctx, "tasks", opt, tasks)
-	return *tasks, err
+	tasks := []Task{}
+	for {
+		page := []Task{}
+		next, err := c.request(ctx, "GET", "tasks", nil, nil, opt, &page)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, page...)
+		if next == nil {
+			break
+		} else {
+			newOpt := *opt
+			opt = &newOpt
+			opt.Offset = next.Offset
+		}
+	}
+	return tasks, nil
 }
 
 func (c *Client) GetTask(ctx context.Context, id int64, opt *Filter) (Task, error) {
@@ -221,7 +258,7 @@ func (c *Client) GetTask(ctx context.Context, id int64, opt *Filter) (Task, erro
 // https://asana.com/developers/api-reference/tasks#update
 func (c *Client) UpdateTask(ctx context.Context, id int64, tu TaskUpdate, opt *Filter) (Task, error) {
 	task := new(Task)
-	err := c.request(ctx, "PUT", fmt.Sprintf("tasks/%d", id), tu, nil, opt, task)
+	_, err := c.request(ctx, "PUT", fmt.Sprintf("tasks/%d", id), tu, nil, opt, task)
 	return *task, err
 }
 
@@ -230,7 +267,7 @@ func (c *Client) UpdateTask(ctx context.Context, id int64, tu TaskUpdate, opt *F
 // https://asana.com/developers/api-reference/tasks#create
 func (c *Client) CreateTask(ctx context.Context, fields map[string]string, opts *Filter) (Task, error) {
 	task := new(Task)
-	err := c.request(ctx, "POST", "tasks", nil, toURLValues(fields), opts, task)
+	_, err := c.request(ctx, "POST", "tasks", nil, toURLValues(fields), opts, task)
 	return *task, err
 }
 
@@ -265,9 +302,23 @@ func (c *Client) GetUserByID(ctx context.Context, id int64, opt *Filter) (User, 
 }
 
 func (c *Client) GetWebhooks(ctx context.Context, opt *Filter) ([]Webhook, error) {
-	webhooks := new([]Webhook)
-	err := c.Request(ctx, "webhooks", opt, &webhooks)
-	return *webhooks, err
+	webhooks := []Webhook{}
+	for {
+		page := []Webhook{}
+		next, err := c.request(ctx, "GET", "webhooks", nil, nil, opt, &page)
+		if err != nil {
+			return nil, err
+		}
+		webhooks = append(webhooks, page...)
+		if next == nil {
+			break
+		} else {
+			newOpt := *opt
+			opt = &newOpt
+			opt.Offset = next.Offset
+		}
+	}
+	return webhooks, nil
 }
 
 func (c *Client) GetWebhook(ctx context.Context, id int64) (Webhook, error) {
@@ -282,24 +333,26 @@ func (c *Client) CreateWebhook(ctx context.Context, id int64, target string) (We
 		"resource": []string{fmt.Sprintf("%d", id)},
 		"target":   []string{target},
 	}
-	err := c.request(ctx, "POST", "webhooks", nil, p, nil, &webhook)
+	_, err := c.request(ctx, "POST", "webhooks", nil, p, nil, &webhook)
 	return *webhook, err
 }
 
 func (c *Client) DeleteWebhook(ctx context.Context, id int64) error {
 	var resp interface{} // Empty response
-	return c.request(ctx, "DELETE", fmt.Sprintf("webhooks/%d", id), nil, nil, nil, &resp)
+	_, err := c.request(ctx, "DELETE", fmt.Sprintf("webhooks/%d", id), nil, nil, nil, &resp)
+	return err
 }
 
 func (c *Client) Request(ctx context.Context, path string, opt *Filter, v interface{}) error {
-	return c.request(ctx, "GET", path, nil, nil, opt, v)
+	_, err := c.request(ctx, "GET", path, nil, nil, opt, v)
+	return err
 }
 
 // request makes a request to Asana API, using method, at path, sending data or form with opt filter.
 // Only data or form could be sent at the same time. If both provided form will be omitted.
 // Also it's possible to do request with nil data and form.
 // The response is populated into v, and any error is returned.
-func (c *Client) request(ctx context.Context, method string, path string, data interface{}, form url.Values, opt *Filter, v interface{}) error {
+func (c *Client) request(ctx context.Context, method string, path string, data interface{}, form url.Values, opt *Filter, v interface{}) (*NextPage, error) {
 	if opt == nil {
 		opt = &Filter{}
 	}
@@ -311,26 +364,28 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 	}
 	urlStr, err := addOptions(path, opt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	rel, err := url.Parse(urlStr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	u := c.BaseURL.ResolveReference(rel)
 	var body io.Reader
 	if data != nil {
 		b, err := json.Marshal(request{Data: data})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		body = bytes.NewReader(b)
 	} else if form != nil {
 		body = strings.NewReader(form.Encode())
 	}
+
+	fmt.Printf("ASANA REQUEST: %s", u.String())
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if data != nil {
@@ -342,19 +397,20 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 	req.Header.Set("User-Agent", c.UserAgent)
 	resp, err := c.doer.Do(req.WithContext(ctx))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode == http.StatusUnauthorized {
-		return ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
 
 	res := &Response{Data: v}
 	err = json.NewDecoder(resp.Body).Decode(res)
 	if len(res.Errors) > 0 {
-		return res.Errors
+		return nil, res.Errors
 	}
-	return err
+	return res.NextPage, err
 }
 
 func addOptions(s string, opt interface{}) (string, error) {
