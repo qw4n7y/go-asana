@@ -31,8 +31,20 @@ var defaultOptFields = map[string][]string{
 }
 
 var (
+	// ErrBadRequest can be returned on any call on response status code 400.
+	ErrBadRequest = errors.New("asana: bad request")
 	// ErrUnauthorized can be returned on any call on response status code 401.
 	ErrUnauthorized = errors.New("asana: unauthorized")
+	// ErrPaymentRequired can be returned on any call on response status code 402.
+	ErrPaymentRequired = errors.New("asana: payment required")
+	// ErrForbidden can be returned on any call on response status code 403.
+	ErrForbidden = errors.New("asana: forbidden")
+	// ErrNotFound can be returned on any call on response status code 404.
+	ErrNotFound = errors.New("asana: not found")
+	// ErrThottled can be returned on any call on response status code 429.
+	ErrThottled = errors.New("asana: too many requests")
+	// ErrInternal can be returned on any call on response status code 500.
+	ErrInternal = errors.New("asana: internal server error")
 )
 
 type (
@@ -401,8 +413,22 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusUnauthorized {
+	// See https://asana.com/developers/documentation/getting-started/errors
+	switch resp.StatusCode {
+	case http.StatusBadRequest:
+		return nil, ErrBadRequest
+	case http.StatusUnauthorized:
 		return nil, ErrUnauthorized
+	case http.StatusPaymentRequired:
+		return nil, ErrPaymentRequired
+	case http.StatusForbidden:
+		return nil, ErrForbidden
+	case http.StatusNotFound:
+		return nil, ErrNotFound
+	case http.StatusTooManyRequests:
+		return nil, ErrThottled
+	case http.StatusInternalServerError:
+		return nil, ErrInternal
 	}
 
 	res := &Response{Data: v}
