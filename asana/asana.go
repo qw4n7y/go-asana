@@ -41,8 +41,8 @@ var (
 	ErrForbidden = errors.New("asana: forbidden")
 	// ErrNotFound can be returned on any call on response status code 404.
 	ErrNotFound = errors.New("asana: not found")
-	// ErrThottled can be returned on any call on response status code 429.
-	ErrThottled = errors.New("asana: too many requests")
+	// ErrThrottled can be returned on any call on response status code 429.
+	ErrThrottled = errors.New("asana: too many requests")
 	// ErrInternal can be returned on any call on response status code 500.
 	ErrInternal = errors.New("asana: internal server error")
 )
@@ -426,7 +426,7 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 	case http.StatusNotFound:
 		return nil, ErrNotFound
 	case http.StatusTooManyRequests:
-		return nil, ErrThottled
+		return nil, ErrThrottled
 	case http.StatusInternalServerError:
 		return nil, ErrInternal
 	}
