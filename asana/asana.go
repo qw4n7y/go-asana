@@ -394,7 +394,6 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 		body = strings.NewReader(form.Encode())
 	}
 
-	fmt.Printf("ASANA REQUEST: %s", u.String())
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		return nil, err
