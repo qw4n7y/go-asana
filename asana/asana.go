@@ -66,12 +66,14 @@ type (
 
 	Workspace struct {
 		ID           int64  `json:"id,omitempty"`
+		GID          string `json:"gid,omitempty"`
 		Name         string `json:"name,omitempty"`
 		Organization bool   `json:"is_organization,omitempty"`
 	}
 
 	User struct {
 		ID         int64             `json:"id,omitempty"`
+		GID        string            `json:"gid,omitempty"`
 		Email      string            `json:"email,omitempty"`
 		Name       string            `json:"name,omitempty"`
 		Photo      map[string]string `json:"photo,omitempty"`
@@ -80,6 +82,7 @@ type (
 
 	Project struct {
 		ID       int64  `json:"id,omitempty"`
+		GID      string `json:"gid,omitempty"`
 		Name     string `json:"name,omitempty"`
 		Archived bool   `json:"archived,omitempty"`
 		Color    string `json:"color,omitempty"`
@@ -88,6 +91,7 @@ type (
 
 	Task struct {
 		ID             int64     `json:"id,omitempty"`
+		GID            string    `json:"gid,omitempty"`
 		Assignee       *User     `json:"assignee,omitempty"`
 		AssigneeStatus string    `json:"assignee_status,omitempty"`
 		CreatedAt      time.Time `json:"created_at,omitempty"`
@@ -110,6 +114,7 @@ type (
 
 	Story struct {
 		ID        int64     `json:"id,omitempty"`
+		GID       string    `json:"gid,omitempty"`
 		CreatedAt time.Time `json:"created_at,omitempty"`
 		CreatedBy User      `json:"created_by,omitempty"`
 		Hearts    []Heart   `json:"hearts,omitempty"`
@@ -125,6 +130,7 @@ type (
 
 	Tag struct {
 		ID    int64  `json:"id,omitempty"`
+		GID   string `json:"gid,omitempty"`
 		Name  string `json:"name,omitempty"`
 		Color string `json:"color,omitempty"`
 		Notes string `json:"notes,omitempty"`
@@ -133,8 +139,11 @@ type (
 	Filter struct {
 		Archived       bool     `url:"archived,omitempty"`
 		Assignee       int64    `url:"assignee,omitempty"`
+		AssigneeGID    int64    `url:"assignee,omitempty"`
 		Project        int64    `url:"project,omitempty"`
+		ProjectGID     string   `url:"project,omitempty"`
 		Workspace      int64    `url:"workspace,omitempty"`
+		WorkspaceGID   string   `url:"workspace,omitempty"`
 		CompletedSince string   `url:"completed_since,omitempty"`
 		ModifiedSince  string   `url:"modified_since,omitempty"`
 		OptFields      []string `url:"opt_fields,comma,omitempty"`
@@ -160,6 +169,7 @@ type (
 
 	Webhook struct {
 		ID       int64    `json:"id,omitempty"`
+		GID      string   `json:"gid,omitempty"`
 		Resource Resource `json:"resource,omitempty"`
 		Target   string   `json:"target",omitempty"`
 		Active   bool     `json:"active",omitempty`
@@ -167,6 +177,7 @@ type (
 
 	Resource struct {
 		ID   int64  `json:"id,omitempty"`
+		GID  string `json:"gid,omitempty"`
 		Name string `json:"name,omitempty"`
 	}
 
@@ -265,12 +276,24 @@ func (c *Client) GetTask(ctx context.Context, id int64, opt *Filter) (Task, erro
 	return *task, err
 }
 
+func (c *Client) GetTaskByGID(ctx context.Context, id string, opt *Filter) (Task, error) {
+	task := new(Task)
+	err := c.Request(ctx, fmt.Sprintf("tasks/%s", id), opt, task)
+	return *task, err
+}
+
 // UpdateTask updates a task.
 //
 // https://asana.com/developers/api-reference/tasks#update
 func (c *Client) UpdateTask(ctx context.Context, id int64, tu TaskUpdate, opt *Filter) (Task, error) {
 	task := new(Task)
 	_, err := c.request(ctx, "PUT", fmt.Sprintf("tasks/%d", id), tu, nil, opt, task)
+	return *task, err
+}
+
+func (c *Client) UpdateTaskByGID(ctx context.Context, id string, tu TaskUpdate, opt *Filter) (Task, error) {
+	task := new(Task)
+	_, err := c.request(ctx, "PUT", fmt.Sprintf("tasks/%s", id), tu, nil, opt, task)
 	return *task, err
 }
 
@@ -339,6 +362,12 @@ func (c *Client) GetWebhook(ctx context.Context, id int64) (Webhook, error) {
 	return *webhook, err
 }
 
+func (c *Client) GetWebhookByGID(ctx context.Context, id string) (Webhook, error) {
+	webhook := new(Webhook)
+	err := c.Request(ctx, fmt.Sprintf("webhooks/%s", id), nil, &webhook)
+	return *webhook, err
+}
+
 func (c *Client) CreateWebhook(ctx context.Context, id int64, target string) (Webhook, error) {
 	webhook := new(Webhook)
 	p := url.Values{
@@ -349,9 +378,25 @@ func (c *Client) CreateWebhook(ctx context.Context, id int64, target string) (We
 	return *webhook, err
 }
 
+func (c *Client) CreateWebhookWithGID(ctx context.Context, id string, target string) (Webhook, error) {
+	webhook := new(Webhook)
+	p := url.Values{
+		"resource": []string{id},
+		"target":   []string{target},
+	}
+	_, err := c.request(ctx, "POST", "webhooks", nil, p, nil, &webhook)
+	return *webhook, err
+}
+
 func (c *Client) DeleteWebhook(ctx context.Context, id int64) error {
 	var resp interface{} // Empty response
 	_, err := c.request(ctx, "DELETE", fmt.Sprintf("webhooks/%d", id), nil, nil, nil, &resp)
+	return err
+}
+
+func (c *Client) DeleteWebhookByGID(ctx context.Context, id string) error {
+	var resp interface{} // Empty response
+	_, err := c.request(ctx, "DELETE", fmt.Sprintf("webhooks/%s", id), nil, nil, nil, &resp)
 	return err
 }
 
