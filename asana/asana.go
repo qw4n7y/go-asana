@@ -137,7 +137,7 @@ type (
 	}
 
 	Filter struct {
-		Archived       bool     `url:"archived,omitempty"`
+		Archived       *bool    `url:"archived,omitempty"`
 		Assignee       int64    `url:"assignee,omitempty"`
 		AssigneeGID    int64    `url:"assignee,omitempty"`
 		Project        int64    `url:"project,omitempty"`
@@ -502,4 +502,9 @@ func toURLValues(m map[string]string) url.Values {
 		values[k] = []string{v}
 	}
 	return values
+}
+
+// Bool returns a pointer to a bool.
+func Bool(b bool) *bool {
+	return &b
 }
