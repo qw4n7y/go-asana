@@ -31,20 +31,14 @@ var defaultOptFields = map[string][]string{
 }
 
 var (
-	// ErrBadRequest can be returned on any call on response status code 400.
-	ErrBadRequest = errors.New("asana: bad request")
-	// ErrUnauthorized can be returned on any call on response status code 401.
-	ErrUnauthorized = errors.New("asana: unauthorized")
-	// ErrPaymentRequired can be returned on any call on response status code 402.
-	ErrPaymentRequired = errors.New("asana: payment required")
-	// ErrForbidden can be returned on any call on response status code 403.
-	ErrForbidden = errors.New("asana: forbidden")
-	// ErrNotFound can be returned on any call on response status code 404.
-	ErrNotFound = errors.New("asana: not found")
-	// ErrThrottled can be returned on any call on response status code 429.
-	ErrThrottled = errors.New("asana: too many requests")
-	// ErrInternal can be returned on any call on response status code 500.
-	ErrInternal = errors.New("asana: internal server error")
+	// Constants for common error message text
+	TextBadRequest      = "asana: bad request"
+	TextUnauthorized    = "asana: unauthorized"
+	TextPaymentRequired = "asana: payment required"
+	TextForbidden       = "asana: forbidden"
+	TextNotFound        = "asana: not found"
+	TextThrottled       = "asana: too many requests"
+	TextInternal        = "asana: internal server error"
 )
 
 type (
@@ -189,7 +183,38 @@ type (
 
 	// Errors always has at least 1 element when returned.
 	Errors []Error
+
+	RequestError struct {
+		Err      error
+		Response *http.Response
+		Text     string
+	}
 )
+
+func (re RequestError) New(resp *http.Response, err error) RequestError {
+	txt := "asana: error"
+	switch resp.StatusCode {
+	case http.StatusBadRequest:
+		txt = TextBadRequest
+	case http.StatusUnauthorized:
+		txt = TextUnauthorized
+	case http.StatusPaymentRequired:
+		txt = TextPaymentRequired
+	case http.StatusForbidden:
+		txt = TextForbidden
+	case http.StatusNotFound:
+		txt = TextNotFound
+	case http.StatusTooManyRequests:
+		txt = TextThrottled
+	case http.StatusInternalServerError:
+		txt = TextInternal
+	}
+	return RequestError{Response: resp, Err: err, Text: txt}
+}
+
+func (re RequestError) Error() string {
+	return re.Text
+}
 
 func (f DoerFunc) Do(req *http.Request) (resp *http.Response, err error) {
 	return f(req)
@@ -459,20 +484,8 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 
 	// See https://asana.com/developers/documentation/getting-started/errors
 	switch resp.StatusCode {
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusUnauthorized:
-		return nil, ErrUnauthorized
-	case http.StatusPaymentRequired:
-		return nil, ErrPaymentRequired
-	case http.StatusForbidden:
-		return nil, ErrForbidden
-	case http.StatusNotFound:
-		return nil, ErrNotFound
-	case http.StatusTooManyRequests:
-		return nil, ErrThrottled
-	case http.StatusInternalServerError:
-		return nil, ErrInternal
+	case http.StatusBadRequest, http.StatusUnauthorized, http.StatusPaymentRequired, http.StatusForbidden, http.StatusNotFound, http.StatusTooManyRequests, http.StatusInternalServerError:
+		return nil, RequestError.New(resp, err)
 	}
 
 	res := &Response{Data: v}
