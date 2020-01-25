@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -29,17 +29,6 @@ var defaultOptFields = map[string][]string{
 	"workspaces": {"name", "is_organization"},
 	"tasks":      {"name", "assignee", "assignee_status", "completed", "parent"},
 }
-
-var (
-	// Constants for common error message text
-	TextBadRequest      = "asana: bad request"
-	TextUnauthorized    = "asana: unauthorized"
-	TextPaymentRequired = "asana: payment required"
-	TextForbidden       = "asana: forbidden"
-	TextNotFound        = "asana: not found"
-	TextThrottled       = "asana: too many requests"
-	TextInternal        = "asana: internal server error"
-)
 
 type (
 	// Doer interface used for doing http calls.
@@ -184,36 +173,32 @@ type (
 	// Errors always has at least 1 element when returned.
 	Errors []Error
 
-	RequestError struct {
-		Err      error
-		Response *http.Response
-		Text     string
+	// HTTP request error
+	requestError struct {
+		Body string
+		Code int
 	}
 )
 
-func (re RequestError) New(resp *http.Response, err error) RequestError {
-	txt := "asana: error"
-	switch resp.StatusCode {
+func (re requestError) Error() string {
+	txt := "request error"
+	switch re.Code {
 	case http.StatusBadRequest:
-		txt = TextBadRequest
+		txt = "bad request"
 	case http.StatusUnauthorized:
-		txt = TextUnauthorized
+		txt = "unauthorized"
 	case http.StatusPaymentRequired:
-		txt = TextPaymentRequired
+		txt = "payment required"
 	case http.StatusForbidden:
-		txt = TextForbidden
+		txt = "forbidden"
 	case http.StatusNotFound:
-		txt = TextNotFound
+		txt = "not found"
 	case http.StatusTooManyRequests:
-		txt = TextThrottled
+		txt = "too many requests"
 	case http.StatusInternalServerError:
-		txt = TextInternal
+		txt = "internal server error"
 	}
-	return RequestError{Response: resp, Err: err, Text: txt}
-}
-
-func (re RequestError) Error() string {
-	return re.Text
+	return fmt.Sprintf("asana: Error: %s, got HTTP response code %d with body: %v", txt, re.Code, re.Body)
 }
 
 func (f DoerFunc) Do(req *http.Request) (resp *http.Response, err error) {
@@ -483,9 +468,15 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 	defer resp.Body.Close()
 
 	// See https://asana.com/developers/documentation/getting-started/errors
-	switch resp.StatusCode {
-	case http.StatusBadRequest, http.StatusUnauthorized, http.StatusPaymentRequired, http.StatusForbidden, http.StatusNotFound, http.StatusTooManyRequests, http.StatusInternalServerError:
-		return nil, RequestError.New(resp, err)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, rerr := ioutil.ReadAll(resp.Body)
+		if rerr != nil {
+			return nil, rerr
+		}
+		return nil, &requestError{
+			Body: string(body),
+			Code: resp.StatusCode,
+		}
 	}
 
 	res := &Response{Data: v}

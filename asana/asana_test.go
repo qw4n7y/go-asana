@@ -225,7 +225,7 @@ func TestUnauthorized(t *testing.T) {
 	})
 
 	_, err := client.ListTags(context.Background(), nil)
-	if err != ErrUnauthorized {
+	if err == nil || err.Code != http.StatusUnauthorized {
 		t.Errorf("Unexpected err %v", err)
 	}
 }
