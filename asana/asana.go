@@ -471,7 +471,7 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, rerr := ioutil.ReadAll(resp.Body)
 		if rerr != nil {
-			return nil, rerr
+			return nil, fmt.Errorf("asana: Error reading response body: %s", rerr)
 		}
 		return nil, &requestError{
 			Body: string(body),
