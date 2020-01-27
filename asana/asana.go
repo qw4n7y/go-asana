@@ -174,13 +174,13 @@ type (
 	Errors []Error
 
 	// HTTP request error
-	requestError struct {
+	RequestError struct {
 		Body string
 		Code int
 	}
 )
 
-func (re requestError) Error() string {
+func (re RequestError) Error() string {
 	txt := "request error"
 	switch re.Code {
 	case http.StatusBadRequest:
@@ -198,7 +198,7 @@ func (re requestError) Error() string {
 	case http.StatusInternalServerError:
 		txt = "internal server error"
 	}
-	return fmt.Sprintf("asana: Error: %s, got HTTP response code %d with body: %v", txt, re.Code, re.Body)
+	return fmt.Sprintf("asana: Error: %s, got HTTP response code %d", txt, re.Code)
 }
 
 func (f DoerFunc) Do(req *http.Request) (resp *http.Response, err error) {
@@ -473,7 +473,7 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 		if rerr != nil {
 			return nil, fmt.Errorf("asana: Error reading response body: %s", rerr)
 		}
-		return nil, &requestError{
+		return nil, &RequestError{
 			Body: string(body),
 			Code: resp.StatusCode,
 		}

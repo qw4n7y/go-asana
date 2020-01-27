@@ -225,8 +225,15 @@ func TestUnauthorized(t *testing.T) {
 	})
 
 	_, err := client.ListTags(context.Background(), nil)
-	if err == nil || err.Code != http.StatusUnauthorized {
-		t.Errorf("Unexpected err %v", err)
+	if err == nil {
+		t.Error("No error when one was expected")
+	}
+	rerr, ok := err.(*RequestError)
+	if !ok {
+		t.Error("Unable to cast error as RequestError")
+	}
+	if rerr.Code != http.StatusUnauthorized {
+		t.Errorf("Unexpected response status code: %d", rerr.Code)
 	}
 }
 
