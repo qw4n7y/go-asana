@@ -122,7 +122,7 @@ type (
 	Filter struct {
 		Archived       *bool    `url:"archived,omitempty"`
 		Assignee       int64    `url:"assignee,omitempty"`
-		AssigneeGID    int64    `url:"assignee,omitempty"`
+		AssigneeGID    string   `url:"assignee,omitempty"`
 		Project        int64    `url:"project,omitempty"`
 		ProjectGID     string   `url:"project,omitempty"`
 		Workspace      int64    `url:"workspace,omitempty"`
