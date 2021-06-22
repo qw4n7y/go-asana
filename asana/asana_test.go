@@ -99,6 +99,32 @@ func TestListUsers(t *testing.T) {
 	}
 }
 
+func TestListOrganizationTeams(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/organizations/id/teams", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"data":[
+			{"gid": "12345","resource_type": "team","name": "Marketing"},
+			{"gid": "67890","resource_type": "team","name": "Product"}
+		]}`)
+	})
+
+	users, err := client.ListOrganizationTeams(context.Background(), "id")
+	if err != nil {
+		t.Errorf("ListOrganizationTeams returned error: %v", err)
+	}
+
+	want := []Team{
+		{GID: "12345", ResourceType: "team", Name: "Marketing"},
+		{GID: "67890", ResourceType: "team", Name: "Product"},
+	}
+
+	if !reflect.DeepEqual(users, want) {
+		t.Errorf("ListOrganizationTeams returned %+v, want %+v", users, want)
+	}
+}
+
 func TestListProjects(t *testing.T) {
 	setup()
 	defer teardown()

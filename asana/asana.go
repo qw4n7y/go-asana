@@ -89,6 +89,23 @@ type (
 		DueOn          string    `json:"due_on,omitempty"`
 		DueAt          string    `json:"due_at,omitempty"`
 	}
+
+	Team struct {
+		GID             string       `json:"gid,omitempty"`
+		ResourceType    string       `json:"resource_type,omitempty"`
+		Name            string       `json:"name,omitempty"`
+		Description     string       `json:"description,omitempty"`
+		HTMLDescription string       `json:"html_description,omitempty"`
+		Organization    Organization `json:"organization,omitempty"`
+		PermalinkURL    string       `json:"permalink_url,omitempty"`
+	}
+
+	Organization struct {
+		GID          string `json:"gid,omitempty"`
+		ResourceType string `json:"resource_type,omitempty"`
+		Name         string `json:"name,omitempty"`
+	}
+
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
 		Notes   *string `json:"notes,omitempty"`
@@ -305,6 +322,16 @@ func (c *Client) UpdateTaskByGID(ctx context.Context, id string, tu TaskUpdate, 
 	task := new(Task)
 	_, err := c.request(ctx, "PUT", fmt.Sprintf("tasks/%s", id), tu, nil, opt, task)
 	return *task, err
+}
+
+// ListOrganizationTeams returns the compact records for all teams in the
+// organization visible to the authorized user.
+//
+// https://developers.asana.com/docs/get-teams-in-an-organization
+func (c *Client) ListOrganizationTeams(ctx context.Context, workspaceID string) ([]Team, error) {
+	teams := new([]Team)
+	err := c.Request(ctx, fmt.Sprintf("organizations/%s/teams", workspaceID), nil, teams)
+	return *teams, err
 }
 
 // CreateTask creates a task.
