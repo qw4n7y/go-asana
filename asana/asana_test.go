@@ -73,6 +73,32 @@ func TestListWorkspaces(t *testing.T) {
 	}
 }
 
+func TestListTeams(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/organizations/id/teams", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"data":[
+			{"id":1,"name":"Team 1","resource_type":"team"},
+			{"id":2,"name":"Team 2","resource_type":"team"}
+		]}`)
+	})
+
+	teams, err := client.ListTeams(context.Background())
+	if err != nil {
+		t.Errorf("ListTeams returned error: %v", err)
+	}
+
+	want := []Team{
+		{ID: 1, Name: "Team 1", ResourceType: "team"},
+		{ID: 2, Name: "Team 2", ResourceType: "team"},
+	}
+
+	if !reflect.DeepEqual(workspaces, want) {
+		t.Errorf("ListTeams returned %+v, want %+v", teams, want)
+	}
+}
+
 func TestListUsers(t *testing.T) {
 	setup()
 	defer teardown()

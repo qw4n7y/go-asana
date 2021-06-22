@@ -54,6 +54,12 @@ type (
 		Organization bool   `json:"is_organization,omitempty"`
 	}
 
+	Team struct {
+		GID          string `json:"gid,omitempty"`
+		Name         string `json:"name,omitempty"`
+		ResourceType string `json:"resource_type,omitempty"`
+	}
+
 	User struct {
 		ID         int64             `json:"id,omitempty"`
 		GID        string            `json:"gid,omitempty"`
@@ -232,6 +238,12 @@ func (c *Client) ListWorkspaces(ctx context.Context) ([]Workspace, error) {
 	workspaces := new([]Workspace)
 	err := c.Request(ctx, "workspaces", nil, workspaces)
 	return *workspaces, err
+}
+
+func (c *Client) ListTeams(ctx context.Context, workspaceGID string) ([]Team, error) {
+	teams := new([]Team)
+	err := c.Request(ctx, fmt.Sprintf("organizations/%s/teams", workspaceGID), nil, teams)
+	return *teams, err
 }
 
 func (c *Client) ListUsers(ctx context.Context, opt *Filter) ([]User, error) {
