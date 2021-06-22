@@ -151,6 +151,32 @@ func TestListProjects(t *testing.T) {
 	}
 }
 
+func TestListTeamProjects(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/teams/id/projects", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"data":[
+			{"id":1,"name":"Project 1"},
+			{"id":2,"name":"Project 2"}
+		]}`)
+	})
+
+	projects, err := client.ListTeamProjects(context.Background(), "id", nil)
+	if err != nil {
+		t.Errorf("ListTeamProjects returned error: %v", err)
+	}
+
+	want := []Project{
+		{ID: 1, Name: "Project 1"},
+		{ID: 2, Name: "Project 2"},
+	}
+
+	if !reflect.DeepEqual(projects, want) {
+		t.Errorf("ListTeamProjects returned %+v, want %+v", projects, want)
+	}
+}
+
 func TestListTasks(t *testing.T) {
 	setup()
 	defer teardown()

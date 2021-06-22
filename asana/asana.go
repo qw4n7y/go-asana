@@ -277,6 +277,29 @@ func (c *Client) ListProjects(ctx context.Context, opt *Filter) ([]Project, erro
 	return projects, nil
 }
 
+// ListTeamProjects returns the compact project records for all projects in the team.
+//
+// https://developers.asana.com/docs/get-a-teams-projects
+func (c *Client) ListTeamProjects(ctx context.Context, teamID string, opt *Filter) ([]Project, error) {
+	projects := []Project{}
+	for {
+		page := []Project{}
+		next, err := c.request(ctx, "GET", fmt.Sprintf("teams/%s/projects", teamID), nil, nil, opt, &page)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, page...)
+		if next == nil {
+			break
+		} else {
+			newOpt := *opt
+			opt = &newOpt
+			opt.Offset = next.Offset
+		}
+	}
+	return projects, nil
+}
+
 func (c *Client) ListTasks(ctx context.Context, opt *Filter) ([]Task, error) {
 	tasks := []Task{}
 	for {
