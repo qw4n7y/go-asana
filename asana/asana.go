@@ -134,6 +134,7 @@ type (
 		Workspace      int64    `url:"workspace,omitempty"`
 		WorkspaceGID   string   `url:"workspace,omitempty"`
 		TeamGID        string   `url:"team,omitempty"`
+		ResourceGID    string   `url:"resource,omitempty"`
 		CompletedSince string   `url:"completed_since,omitempty"`
 		ModifiedSince  string   `url:"modified_since,omitempty"`
 		OptFields      []string `url:"opt_fields,comma,omitempty"`
