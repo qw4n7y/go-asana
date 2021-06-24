@@ -241,10 +241,24 @@ func (c *Client) ListWorkspaces(ctx context.Context) ([]Workspace, error) {
 	return *workspaces, err
 }
 
-func (c *Client) ListTeams(ctx context.Context, workspaceGID string) ([]Team, error) {
-	teams := new([]Team)
-	err := c.Request(ctx, fmt.Sprintf("organizations/%s/teams", workspaceGID), nil, teams)
-	return *teams, err
+func (c *Client) ListTeams(ctx context.Context, opt *Filter) ([]Team, error) {
+	teams := []Team{}
+	for {
+		page := []Team{}
+		next, err := c.request(ctx, "GET", fmt.Sprintf("organizations/%s/teams", opt.WorkspaceGID), nil, nil, opt, &page)
+		if err != nil {
+			return nil, err
+		}
+		teams = append(teams, page...)
+		if next == nil {
+			break
+		} else {
+			newOpt := *opt
+			opt = &newOpt
+			opt.Offset = next.Offset
+		}
+	}
+	return teams, nil
 }
 
 func (c *Client) ListUsers(ctx context.Context, opt *Filter) ([]User, error) {
