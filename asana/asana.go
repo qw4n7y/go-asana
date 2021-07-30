@@ -159,11 +159,14 @@ type (
 	}
 
 	Webhook struct {
-		ID       int64    `json:"id,omitempty"`
-		GID      string   `json:"gid,omitempty"`
-		Resource Resource `json:"resource,omitempty"`
-		Target   string   `json:"target",omitempty"`
-		Active   bool     `json:"active",omitempty`
+		ID            int64     `json:"id,omitempty"`
+		GID           string    `json:"gid,omitempty"`
+		Resource      Resource  `json:"resource,omitempty"`
+		Target        string    `json:"target,omitempty"`
+		Active        bool      `json:"active,omitempty"`
+		CreatedAt     time.Time `json:"created_at,omitempty"`
+		LastSuccessAt time.Time `json:"last_success_at,omitempty"`
+		LastFailureAt time.Time `json:"last_failure_at,omitempty"`
 	}
 
 	Resource struct {
