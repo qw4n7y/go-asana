@@ -12,7 +12,7 @@ go-asana
 ### Usage ###
 
 ```go
-import "github.com/tambet/go-asana/asana"
+import "github.com/qw4n7y/go-asana/asana"
 ```
 
 Create a new Asana client instance, then use provided methods on the client to
