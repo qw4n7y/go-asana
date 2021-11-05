@@ -530,6 +530,7 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 		if rerr != nil {
 			return nil, fmt.Errorf("asana: Error reading response body: %s", rerr)
 		}
+		fmt.Println("[ASANA] ", resp.StatusCode, " ", string(body))
 		return nil, &RequestError{
 			Body: string(body),
 			Code: resp.StatusCode,
