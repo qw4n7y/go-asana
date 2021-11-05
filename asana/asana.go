@@ -373,6 +373,12 @@ func (c *Client) CreateTask(ctx context.Context, fields map[string]string, opts 
 	return *task, err
 }
 
+func (c *Client) CreateTask2(ctx context.Context, body interface{}, opts *Filter) (Task, error) {
+	task := new(Task)
+	_, err := c.request(ctx, "POST", "tasks", body, nil, opts, task)
+	return *task, err
+}
+
 func (c *Client) ListProjectTasks(ctx context.Context, projectID int64, opt *Filter) ([]Task, error) {
 	tasks := new([]Task)
 	err := c.Request(ctx, fmt.Sprintf("projects/%d/tasks", projectID), opt, tasks)
