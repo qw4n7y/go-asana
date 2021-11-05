@@ -78,6 +78,11 @@ type (
 		Notes    string `json:"notes,omitempty"`
 	}
 
+	Section struct {
+		GID  string `json:"gid,omitempty"`
+		Name string `json:"name,omitempty"`
+	}
+
 	Task struct {
 		ID             int64     `json:"id,omitempty"`
 		GID            string    `json:"gid,omitempty"`
@@ -309,6 +314,27 @@ func (c *Client) ListTasks(ctx context.Context, opt *Filter) ([]Task, error) {
 		}
 	}
 	return tasks, nil
+}
+
+func (c *Client) ListProjectSections(ctx context.Context, projectGID string, opt *Filter) ([]Section, error) {
+	sections := []Section{}
+	for {
+		page := []Section{}
+		endpointUrl := fmt.Sprintf("projects/%v/sections", projectGID)
+		next, err := c.request(ctx, "GET", endpointUrl, nil, nil, opt, &page)
+		if err != nil {
+			return nil, err
+		}
+		sections = append(sections, page...)
+		if next == nil {
+			break
+		} else {
+			newOpt := *opt
+			opt = &newOpt
+			opt.Offset = next.Offset
+		}
+	}
+	return sections, nil
 }
 
 func (c *Client) GetTask(ctx context.Context, id int64, opt *Filter) (Task, error) {
