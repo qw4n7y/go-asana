@@ -84,21 +84,22 @@ type (
 	}
 
 	Task struct {
-		ID             int64     `json:"id,omitempty"`
-		GID            string    `json:"gid,omitempty"`
-		Assignee       *User     `json:"assignee,omitempty"`
-		AssigneeStatus string    `json:"assignee_status,omitempty"`
-		CreatedAt      time.Time `json:"created_at,omitempty"`
-		CreatedBy      User      `json:"created_by,omitempty"` // Undocumented field, but it can be included.
-		Completed      bool      `json:"completed,omitempty"`
-		CompletedAt    time.Time `json:"completed_at,omitempty"`
-		Name           string    `json:"name,omitempty"`
-		Hearts         []Heart   `json:"hearts,omitempty"`
-		Notes          string    `json:"notes,omitempty"`
-		ParentTask     *Task     `json:"parent,omitempty"`
-		Projects       []Project `json:"projects,omitempty"`
-		DueOn          string    `json:"due_on,omitempty"`
-		DueAt          string    `json:"due_at,omitempty"`
+		ID             int64        `json:"id,omitempty"`
+		GID            string       `json:"gid,omitempty"`
+		Assignee       *User        `json:"assignee,omitempty"`
+		AssigneeStatus string       `json:"assignee_status,omitempty"`
+		CreatedAt      time.Time    `json:"created_at,omitempty"`
+		CreatedBy      User         `json:"created_by,omitempty"` // Undocumented field, but it can be included.
+		Completed      bool         `json:"completed,omitempty"`
+		CompletedAt    time.Time    `json:"completed_at,omitempty"`
+		Name           string       `json:"name,omitempty"`
+		Hearts         []Heart      `json:"hearts,omitempty"`
+		Notes          string       `json:"notes,omitempty"`
+		ParentTask     *Task        `json:"parent,omitempty"`
+		Projects       []Project    `json:"projects,omitempty"`
+		DueOn          string       `json:"due_on,omitempty"`
+		DueAt          string       `json:"due_at,omitempty"`
+		Memberships    []Membership `json:"memberships,omitempty"`
 	}
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
@@ -193,6 +194,19 @@ type (
 	RequestError struct {
 		Body string
 		Code int
+	}
+
+	Membership struct {
+		Project string `json:"project"`
+		Section string `json:"section"`
+	}
+
+	NewTask struct {
+		Name        string       `json:"name"`
+		Notes       string       `json:"notes"`
+		HTMLNotes   string       `json:"html_notes"`
+		Projects    []string     `json:"projects"`
+		Memberships []Membership `json:"memberships"`
 	}
 )
 
