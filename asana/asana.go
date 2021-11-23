@@ -500,6 +500,12 @@ func (c *Client) DeleteWebhookByGID(ctx context.Context, id string) error {
 	return err
 }
 
+func (c *Client) DeleteTask(ctx context.Context, taskGid string) error {
+	var resp interface{} // Empty response
+	_, err := c.request(ctx, "DELETE", fmt.Sprintf("tasks/%v", taskGid), nil, nil, nil, &resp)
+	return err
+}
+
 func (c *Client) Request(ctx context.Context, path string, opt *Filter, v interface{}) error {
 	_, err := c.request(ctx, "GET", path, nil, nil, opt, v)
 	return err
