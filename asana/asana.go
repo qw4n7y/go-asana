@@ -216,11 +216,12 @@ type (
 	}
 
 	NewTask struct {
-		Name        string       `json:"name"`
-		Notes       string       `json:"notes"`
-		HTMLNotes   string       `json:"html_notes"`
-		Projects    []string     `json:"projects"`
-		Memberships []Membership `json:"memberships"`
+		Name         string            `json:"name"`
+		Notes        string            `json:"notes"`
+		HTMLNotes    string            `json:"html_notes"`
+		Projects     []string          `json:"projects"`
+		Memberships  []Membership      `json:"memberships"`
+		CustomFields map[string]string `json:"custom_fields"`
 	}
 )
 
