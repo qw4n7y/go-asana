@@ -228,6 +228,7 @@ type (
 		Projects     []string          `json:"projects"`
 		Memberships  []Membership      `json:"memberships"`
 		CustomFields map[string]string `json:"custom_fields"`
+		Tags         []Tags            `json:"tags,omitempty"`
 	}
 )
 
