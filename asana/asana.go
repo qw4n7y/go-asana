@@ -83,6 +83,11 @@ type (
 		Name string `json:"name,omitempty"`
 	}
 
+	Tags struct {
+		GID  string `json:"gid,omitempty"`
+		Name string `json:"name,omitempty"`
+	}
+
 	Task struct {
 		ID             int64         `json:"id,omitempty"`
 		GID            string        `json:"gid,omitempty"`
@@ -100,6 +105,7 @@ type (
 		DueOn          string        `json:"due_on,omitempty"`
 		DueAt          string        `json:"due_at,omitempty"`
 		Memberships    []Membership2 `json:"memberships,omitempty"`
+		Tags           []Tags        `json:"tags,omitempty"`
 	}
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
@@ -222,6 +228,7 @@ type (
 		Projects     []string          `json:"projects"`
 		Memberships  []Membership      `json:"memberships"`
 		CustomFields map[string]string `json:"custom_fields"`
+		Tags         []string          `json:"tags,omitempty"`
 	}
 )
 
