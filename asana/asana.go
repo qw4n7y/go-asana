@@ -109,9 +109,13 @@ type (
 	}
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
+		Completed       *bool   `json:"completed,omitempty"`
 		Notes           *string `json:"notes,omitempty"`
-		Hearted         *bool   `json:"hearted,omitempty"`
 		AssigneeSection *string `json:"assignee_section,omitempty"`
+	}
+
+	TaskSectionUpdate struct {
+		TaskGID string `json:"task"`
 	}
 
 	Story struct {
@@ -371,6 +375,11 @@ func (c *Client) ListProjectSections(ctx context.Context, projectGID string, opt
 		}
 	}
 	return sections, nil
+}
+
+func (c *Client) UpdateTaskSection(ctx context.Context, sectionGID string, taskSectionUpdate TaskSectionUpdate) error {
+	_, err := c.request(ctx, "POST", fmt.Sprintf("sections/%v/addTask", sectionGID), taskSectionUpdate, nil, nil, nil)
+	return err
 }
 
 func (c *Client) GetTask(ctx context.Context, id int64, opt *Filter) (Task, error) {
