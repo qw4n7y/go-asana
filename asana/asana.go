@@ -83,6 +83,11 @@ type (
 		Name string `json:"name,omitempty"`
 	}
 
+	Tags struct {
+		GID  string `json:"gid,omitempty"`
+		Name string `json:"name,omitempty"`
+	}
+
 	Task struct {
 		ID             int64         `json:"id,omitempty"`
 		GID            string        `json:"gid,omitempty"`
@@ -100,12 +105,17 @@ type (
 		DueOn          string        `json:"due_on,omitempty"`
 		DueAt          string        `json:"due_at,omitempty"`
 		Memberships    []Membership2 `json:"memberships,omitempty"`
+		Tags           []Tags        `json:"tags,omitempty"`
 	}
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
+		Completed       *bool   `json:"completed,omitempty"`
 		Notes           *string `json:"notes,omitempty"`
-		Hearted         *bool   `json:"hearted,omitempty"`
 		AssigneeSection *string `json:"assignee_section,omitempty"`
+	}
+
+	TaskSectionUpdate struct {
+		TaskGID string `json:"task"`
 	}
 
 	Story struct {
@@ -222,6 +232,7 @@ type (
 		Projects     []string          `json:"projects"`
 		Memberships  []Membership      `json:"memberships"`
 		CustomFields map[string]string `json:"custom_fields"`
+		Tags         []string          `json:"tags,omitempty"`
 	}
 )
 
@@ -364,6 +375,11 @@ func (c *Client) ListProjectSections(ctx context.Context, projectGID string, opt
 		}
 	}
 	return sections, nil
+}
+
+func (c *Client) UpdateTaskSection(ctx context.Context, sectionGID string, taskSectionUpdate TaskSectionUpdate) error {
+	_, err := c.request(ctx, "POST", fmt.Sprintf("sections/%v/addTask", sectionGID), taskSectionUpdate, nil, nil, nil)
+	return err
 }
 
 func (c *Client) GetTask(ctx context.Context, id int64, opt *Filter) (Task, error) {
