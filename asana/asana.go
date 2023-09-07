@@ -106,6 +106,7 @@ type (
 		DueAt          string        `json:"due_at,omitempty"`
 		Memberships    []Membership2 `json:"memberships,omitempty"`
 		Tags           []Tags        `json:"tags,omitempty"`
+		CustomFields   map[string]string `json:"custom_fields,omitempty"`
 	}
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
