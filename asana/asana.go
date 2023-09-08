@@ -88,6 +88,23 @@ type (
 		Name string `json:"name,omitempty"`
 	}
 
+	EnumOption struct {
+		GID          string `json:"gid,omitempty"`
+		Enabled      bool   `json:"enabled,omitempty"`
+		Name         string `json:"name,omitempty"`
+		ResourceType string `json:"resource_type,omitempty"`
+	}
+
+	CustomField struct {
+		GID          string       `json:"gid,omitempty"`
+		Enabled      bool         `json:"enabled,omitempty"`
+		EnumOptions  []EnumOption `json:"enum_options,omitempty"`
+		EnumValue    EnumOption   `json:"enum_value,omitempty"`
+		Name         string       `json:"name,omitempty"`
+		Description  string       `json:"description,omitempty"`
+		DisplayValue string       `json:"display_value,omitempty"`
+	}
+
 	Task struct {
 		ID             int64         `json:"id,omitempty"`
 		GID            string        `json:"gid,omitempty"`
@@ -106,6 +123,7 @@ type (
 		DueAt          string        `json:"due_at,omitempty"`
 		Memberships    []Membership2 `json:"memberships,omitempty"`
 		Tags           []Tags        `json:"tags,omitempty"`
+		CustomFields   []CustomField `json:"custom_fields,omitempty"`
 	}
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
